@@ -4,7 +4,7 @@ import numpy as np
 
 # 1. 打开 USB 摄像头
 # Windows 下先尝试摄像头编号 0
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 if not cap.isOpened():
     cap.release()
@@ -30,10 +30,10 @@ try:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         # 4. 红色范围：红色跨越 H 的两端
-        lower_red1 = np.array([0, 170, 80])
+        lower_red1 = np.array([0, 80, 80])
         upper_red1 = np.array([10, 255, 255])
 
-        lower_red2 = np.array([170, 170, 80])
+        lower_red2 = np.array([170, 80, 80])
         upper_red2 = np.array([179, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
