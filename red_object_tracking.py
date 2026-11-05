@@ -1,6 +1,7 @@
 
 import cv2
 import numpy as np
+import time
 
 # 1. 打开 USB 摄像头
 # Windows 下先尝试摄像头编号 0
@@ -16,6 +17,9 @@ if not cap.isOpened():
 print("摄像头已打开，按 q 键退出")
 
 previous_center = None
+# Day 4：记录上一次速度测量的位置和时间
+last_measurement_center = None
+last_measurement_time = None
 
 try:
     while True:
@@ -30,10 +34,10 @@ try:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         # 4. 红色范围：红色跨越 H 的两端
-        lower_red1 = np.array([0, 80, 80])
+        lower_red1 = np.array([0, 100, 80])
         upper_red1 = np.array([10, 255, 255])
 
-        lower_red2 = np.array([170, 80, 80])
+        lower_red2 = np.array([170, 100, 80])
         upper_red2 = np.array([179, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
@@ -125,6 +129,8 @@ try:
                 else:
                     # 当前目标丢失，等待重新捕获
                     previous_center = None
+                    last_measurement_center = None
+                    last_measurement_time = None
 
                     # 暂时重新选择面积最大的候选目标
                     target = max(
@@ -139,6 +145,40 @@ try:
             contour = target["contour"]
             area = target["area"]
             cx, cy = target["center"]
+
+            direction = "Waiting..."
+            speed = 0.0
+
+            # Day 4：计算目标移动方向和速度
+            current_time = time.perf_counter()
+
+            if last_measurement_center is not None:
+                dx = cx - last_measurement_center[0]
+                dy = cy - last_measurement_center[1]
+
+                dt = current_time - last_measurement_time
+
+                if dt > 0:
+                    distance = (dx ** 2 + dy ** 2) ** 0.5
+                    speed = distance / dt
+
+                    # 判断移动方向
+                    if abs(dx) < 3 and abs(dy) < 3:
+                        direction = "Stationary"
+                        speed = 0
+                    elif abs(dx) > abs(dy):
+                        direction = "Right" if dx > 0 else "Left"
+                    else:
+                        direction = "Down" if dy > 0 else "Up"
+
+                    print(
+                        f"Direction: {direction}, "
+                        f"Speed: {speed:.2f} pixels/s"
+                    )
+
+            # 更新本次测量的位置和时间
+            last_measurement_center = (cx, cy)
+            last_measurement_time = current_time
 
             x, y, w, h = cv2.boundingRect(contour)
 
@@ -168,6 +208,28 @@ try:
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.65,
                 (255, 255, 255),
+                2
+            )
+
+            # 显示移动方向
+            cv2.putText(
+                frame,
+                f"Direction: {direction}",
+                (20, 55),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 255, 255),
+                2
+            )
+
+            # 显示移动速度
+            cv2.putText(
+                frame,
+                f"Speed: {speed:.2f} pixels/s",
+                (20, 80),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 255, 255),
                 2
             )
 
