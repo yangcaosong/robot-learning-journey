@@ -58,13 +58,21 @@
 - [x] Day 4：根据位移和时间间隔计算像素速度（pixels/s）
 - [x] Day 4：设置像素偏移阈值，过滤检测抖动
 - [x] Day 4：在摄像头画面实时显示移动方向和速度
+- [x] Day 5：使用 deque 保存目标最近的运动轨迹
+- [x] Day 5：绘制目标运动轨迹
+- [x] Day 5：计算目标累计移动距离
+- [x] Day 6：使用 5 帧移动平均滤波平滑目标中心坐标
+- [x] Day 6：对比原始坐标与滤波后的坐标
+- [x] Day 6：观察移动平均对目标跟踪、速度和累计距离的影响
+- [ ] Day 7：学习卡尔曼滤波（Kalman Filter）
+- [ ] Day 7：实现目标位置预测与测量更新
 - [ ] 继续优化复杂光照下的颜色识别与误判处理
-- [ ] 学习多帧平滑与目标运动轨迹绘制
-- [ ] 探索目标跟踪、滤波和控制
+- [ ] 对比原始坐标、移动平均与卡尔曼滤波的跟踪效果
+- [ ] 探索目标跟踪、滤波和机器人运动控制
 
 当前视觉项目文件：
 
-- `red_object_tracking.py`：红色目标识别、跟踪、方向判断、速度估算及画面标注。
+- `red_object_tracking.py`：红色目标识别、跟踪、方向判断、速度估算、运动轨迹、累计距离及 5 帧移动平均滤波。
 
 ### 二、Orange Pi 5 Plus
 
@@ -86,10 +94,24 @@
 - [x] 确认 GCC、G++ 是否可用
 - [x] 确认 Python 虚拟环境工具是否可用
 - [x] 创建机器人学习文件夹
-- [ ] 在 Orange Pi 上创建 Python 虚拟环境
-- [ ] 在 Orange Pi 上运行 Python 程序
-- [ ] 安装并验证 OpenCV
-- [ ] 尝试运行 Windows 上的视觉项目
+- [x] 在 Orange Pi 上创建 Python 虚拟环境
+- [x] 在 Orange Pi 上安装并验证 OpenCV、NumPy
+- [x] 在 Orange Pi 上成功运行 Python 程序
+- [x] 将 Windows 视觉项目迁移到 Orange Pi
+- [x] 适配 Linux 下的摄像头访问方式
+- [x] 在 Orange Pi 上成功运行红色目标识别与跟踪程序
+
+#### 当前开发平台
+
+- Windows：Python 3.11 + OpenCV，作为前期开发和测试环境。
+- Orange Pi 5 Plus：Ubuntu Desktop + Python 虚拟环境 + OpenCV，作为 ARM Linux 实际运行平台。
+
+#### 下一阶段
+
+- [ ] 在 Orange Pi 上继续完善视觉目标跟踪
+- [ ] 实现卡尔曼滤波
+- [ ] 探索摄像头与 GPIO、传感器的结合
+- [ ] 逐步进入 ROS 2 学习与机器人控制
 
 ### 三、长期学习方向
 

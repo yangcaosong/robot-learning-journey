@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import time
+from collections import deque
 
 # 1. 打开 USB 摄像头
 # Windows 下先尝试摄像头编号 0
@@ -17,6 +18,11 @@ if not cap.isOpened():
 print("摄像头已打开，按 q 键退出")
 
 previous_center = None
+# Day 5：保存目标最近的运动轨迹
+trajectory = deque(maxlen=64)
+# Day 6：保存最近 5 帧的目标中心坐标
+center_history = deque(maxlen=5)
+total_distance = 0.0
 # Day 4：记录上一次速度测量的位置和时间
 last_measurement_center = None
 last_measurement_time = None
@@ -34,10 +40,10 @@ try:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         # 4. 红色范围：红色跨越 H 的两端
-        lower_red1 = np.array([0, 100, 80])
+        lower_red1 = np.array([0, 130, 80])
         upper_red1 = np.array([10, 255, 255])
 
-        lower_red2 = np.array([170, 100, 80])
+        lower_red2 = np.array([170, 130, 80])
         upper_red2 = np.array([179, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
@@ -144,7 +150,41 @@ try:
         if target is not None:
             contour = target["contour"]
             area = target["area"]
-            cx, cy = target["center"]
+            # 获取原始中心坐标
+            raw_cx, raw_cy = target["center"]
+
+            # 保存最近 5 帧的原始坐标
+            center_history.append((raw_cx, raw_cy))
+
+            # 计算 X、Y 方向的平均坐标
+            cx = int(np.mean([p[0] for p in center_history]))
+            cy = int(np.mean([p[1] for p in center_history]))
+
+            # 计算当前点与上一个轨迹点之间的距离
+            if len(trajectory) > 0:
+                last_x, last_y = trajectory[-1]
+
+                dx = cx - last_x
+                dy = cy - last_y
+
+                step_distance = (dx ** 2 + dy ** 2) ** 0.5
+
+                total_distance += step_distance
+
+            # 保存当前中心点
+            trajectory.append((cx, cy))
+
+            for i in range(1, len(trajectory)):
+                point1 = trajectory[i - 1]
+                point2 = trajectory[i]
+
+                cv2.line(
+                    frame,
+                    point1,
+                    point2,
+                    (255, 0, 0),
+                    2
+                )
 
             direction = "Waiting..."
             speed = 0.0
@@ -171,10 +211,10 @@ try:
                     else:
                         direction = "Down" if dy > 0 else "Up"
 
-                    print(
-                        f"Direction: {direction}, "
-                        f"Speed: {speed:.2f} pixels/s"
-                    )
+                    # print(
+                    #     f"Direction: {direction}, "
+                    #     f"Speed: {speed:.2f} pixels/s"
+                    # )
 
             # 更新本次测量的位置和时间
             last_measurement_center = (cx, cy)
@@ -189,6 +229,24 @@ try:
                 (x + w, y + h),
                 (0, 255, 0),
                 2
+            )
+
+            # 黄色点：原始检测中心
+            cv2.circle(
+                frame,
+                (raw_cx, raw_cy),
+                5,
+                (0, 255, 255),
+                -1
+            )
+
+            # 连线：显示两个中心点之间的偏差
+            cv2.line(
+                frame,
+                (raw_cx, raw_cy),
+                (cx, cy),
+                (255, 255, 0),
+                1
             )
 
             # 红色中心点
@@ -233,10 +291,26 @@ try:
                 2
             )
 
-            # 保存当前中心，供下一帧使用
-            previous_center = (cx, cy)
+            # 显示累计移动距离
+            cv2.putText(
+                frame,
+                f"Total Distance: {total_distance:.2f} pixels",
+                (20, 110),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 0),
+                2
+            )
 
-            # 7. 显示实时结果
+            # 保存当前中心，供下一帧使用
+            previous_center = (raw_cx, raw_cy)
+
+        else:
+            trajectory.clear()
+            center_history.clear()
+            total_distance = 0.0
+
+        # 7. 显示实时结果
         cv2.imshow("USB Camera", frame)
         cv2.imshow("Red Mask", mask)
 
